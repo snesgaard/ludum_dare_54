@@ -1,5 +1,5 @@
 local physics = {
-    id = "__physics__", default_gravity = vec2(0, 25)
+    id = "__physics__", default_gravity = vec2(0, 2000)
 }
 
 function physics.set_gravity(gx, gy)
@@ -15,15 +15,19 @@ end
 function physics.update_velocity(dt)
     local g = physics.get_gravity()
 
-    for _, v in stack.view_table(nw.component.velocity) do
-        v.x = v.x + g.x * dt
-        v.y = v.y + g.y * dt
+    for id, v in stack.view_table(nw.component.velocity) do
+        if not stack.get(nw.component.disable_physics, id) then
+            v.x = v.x + g.x * dt
+            v.y = v.y + g.y * dt
+        end
     end
 end
 
 function physics.update_position(dt)
     for id, v in stack.view_table(nw.component.velocity) do
-        collision.move(id, v.x, v.y)
+        if not stack.get(nw.component.disable_physics, id) then
+            collision.move(id, v.x * dt, v.y * dt)
+        end
     end
 end
 
@@ -79,6 +83,15 @@ function physics.converged_in_area(x, y, w, h)
     end
 
     return true
+end
+
+function physics.enable(id, yes)
+    if not yes then
+        stack.set(nw.component.disable_physics, id)
+        stack.set(nw.component.velocity, id, 0, 0)
+    else
+        stack.remove(nw.component.disable_physics, id)
+    end
 end
 
 function physics.rotate_gravity_counter_clockwise()

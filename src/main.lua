@@ -13,6 +13,7 @@ time = nw.system.time
 clock = time.clock
 timer = time.timer
 camera = require "system.camera"
+drag_and_drop = require "system.drag_and_drop"
 
 function assemble(l, id)
     stack.assemble(l, id)
@@ -21,6 +22,8 @@ end
 
 function default_collision_filter(item, other)
     if stack.get(nw.component.ghost, item) then return "cross" end
+    if stack.get(nw.component.disable_physics, item) then return "cross" end
+    if stack.get(nw.component.disable_physics, other) then return "cross" end
     --if stack.get(nw.component.being_dragged, item) then return "cross" end
 
     return "slide"
@@ -30,6 +33,7 @@ local function spin()
     while 0 < event.spin() do
         time.spin()
         collision.spin()
+        drag_and_drop.spin()
         physics.spin()
         camera.spin()
     end
@@ -89,6 +93,15 @@ function love.load()
         },
         constant.id.camera
     )
+
+    stack.assemble(
+        {
+            {nw.component.hitbox, 0, 0, 100, 100},
+            {nw.component.ghost},
+            {nw.component.draggable}
+        },
+        "dragger"
+    )
 end
 
 function love.update(dt)
@@ -112,10 +125,21 @@ function love.draw()
     gfx.pop()
 end
 
-function love.mousepressed(x, y)
+function love.mousepressed(x, y, button)
+    event.emit("mousepressed", x, y, button)
+    if true then return end
+    if not physics.converged_in_area(0, 0, gfx.getWidth(), gfx.getHeight()) then return end
     local t = tf.entity(constant.id.camera)
     local x, y = t:transformPoint(x, y)
     spawn(x, y)
+end
+
+function love.mousemoved(x, y, dx, dy)
+    event.emit("mousemoved", x, y, dx, dy)
+end
+
+function love.mousereleased(x, y, button)
+    event.emit("mousereleased", x, y, button)
 end
 
 function love.keypressed(key)

@@ -25,4 +25,12 @@ end
 
 function component.origin_offset(ox, oy) return vec2(ox, oy) end
 
+function component.draggable() return true end
+
+function component.being_dragged(x, y)
+    return tf.transform(x, y)
+end
+
+function component.disable_physics() return true end
+
 return component
