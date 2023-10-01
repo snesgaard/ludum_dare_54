@@ -28,16 +28,20 @@ function camera.rotate_clockwise()
     if camera.is_rotation() then return false end
 
     local a = camera.get_angle()
-    stack.set(nw.component.angle_ease, constant.id.camera, a, a + math.pi / 2)
+    stack.set(nw.component.angle_ease, constant.id.camera, a, a - math.pi / 2)
 
+    event.emit("rotate_camera", true)
+    
     return true
 end
 
 function camera.rotate_counter_clockwise()
     if camera.is_rotation() then return false end
-
+    
     local a = camera.get_angle()
-    stack.set(nw.component.angle_ease, constant.id.camera, a, a - math.pi / 2)
+    stack.set(nw.component.angle_ease, constant.id.camera, a, a + math.pi / 2)
+
+    event.emit("rotate_camera", false)
 
     return true
 end

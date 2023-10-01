@@ -33,4 +33,27 @@ end
 
 function component.disable_physics() return true end
 
+function component.scale(s) return s or 1 end
+
+function component.ui_world() return true end
+
+function component.hidden(v) return v end
+
+function component.tilelayer(l) return l end
+
+function component.layer(index) return index end
+
+function component.is_goal() return true end
+
+function component.is_piece() return true end
+
+function component.loaded_map(path, map)
+    return {
+        path = path,
+        map = map
+    }
+end
+
+function component.is_complete() return true end
+
 return component

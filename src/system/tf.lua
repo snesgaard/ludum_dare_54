@@ -13,10 +13,10 @@ end
 
 function tf.entity(id, mirror_override)
     local p = stack.get(nw.component.position, id) or vec2()
-    local m = infer_mirror(stack.get(nw.component.mirror, id), mirror_override)
+    local s = stack.get(nw.component.scale, id)
     local a = stack.get(nw.component.angle, id) or 0
     local o = stack.get(nw.component.origin_offset, id) or vec2()
-    return tf.transform(p.x, p.y, a, m and -1 or 1, 1, o.x, o.y)
+    return tf.transform(p.x, p.y, a, s or 1, s or 1, o.x, o.y)
 end
 
 function tf.between(from, to)

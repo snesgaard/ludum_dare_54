@@ -14,6 +14,10 @@ clock = time.clock
 timer = time.timer
 camera = require "system.camera"
 drag_and_drop = require "system.drag_and_drop"
+level = require "system.level"
+sound = require "system.sound"
+
+require "drawable"
 
 function assemble(l, id)
     stack.assemble(l, id)
@@ -22,11 +26,11 @@ end
 
 function default_collision_filter(item, other)
     if stack.get(nw.component.ghost, item) then return "cross" end
+    if stack.get(nw.component.ghost, other) then return "cross" end
     if stack.get(nw.component.disable_physics, item) then return "cross" end
     if stack.get(nw.component.disable_physics, other) then return "cross" end
     --if stack.get(nw.component.being_dragged, item) then return "cross" end
-
-    return "slide"
+    return "better_slide"
 end
 
 local function spin()
@@ -36,72 +40,34 @@ local function spin()
         drag_and_drop.spin()
         physics.spin()
         camera.spin()
+        sound.spin()
+        level.spin()
+        nw.system.particles.spin()
     end
+
 end
 
-local central_shape = spatial(gfx.getWidth() / 2, gfx.getHeight() / 2, 0, 0):expand(500, 500)
+local central_shape = spatial(640, 320, 0, 0):expand(640, 640)
 
 local function spawn(x, y)
-    local w = love.math.random(1, 3) * 16
-    local h = love.math.random(1, 3) * 16
+    local w = love.math.random(1, 1) * 32   
+    local h = love.math.random(1, 1) * 32   
     stack.assemble(
         {
             {nw.component.hitbox, spatial():expand(w, h):unpack()},
             {nw.component.position, x, y},
-            {nw.component.velocity}
+            {nw.component.velocity},
+            {nw.component.drawable, nw.drawable.hitbox}
         },
         nw.ecs.id.strong("box")
     )
 end
 
 function love.load()
-    collision.set_default_filter(default_collision_filter)
-
-    stack.assemble(
-        {
-            {nw.component.hitbox, central_shape:up():unpack()},
-            {nw.component.position, 0, 0}
-        },
-        nw.ecs.id.strong("wall")
-    )
-    stack.assemble(
-        {
-            {nw.component.hitbox, central_shape:down():unpack()},
-            {nw.component.position, 0, 0}
-        },
-        nw.ecs.id.strong("wall")
-    )
-    stack.assemble(
-        {
-            {nw.component.hitbox, central_shape:left():unpack()},
-            {nw.component.position, 0, 0}
-        },
-        nw.ecs.id.strong("wall")
-    )
-    stack.assemble(
-        {
-            {nw.component.hitbox, central_shape:right():unpack()},
-            {nw.component.position, 0, 0}
-        },
-        nw.ecs.id.strong("wall")
-    )
-
-    stack.assemble(
-        {
-            {nw.component.position, gfx.getWidth() / 2, gfx.getHeight() / 2},
-            {nw.component.origin_offset, gfx.getWidth() / 2, gfx.getHeight() / 2}
-        },
-        constant.id.camera
-    )
-
-    stack.assemble(
-        {
-            {nw.component.hitbox, 0, 0, 100, 100},
-            {nw.component.ghost},
-            {nw.component.draggable}
-        },
-        "dragger"
-    )
+    
+    local cx, cy = gfx.getWidth() / 2, gfx.getHeight() / 2
+    
+    level.load_next()
 end
 
 function love.update(dt)
@@ -111,12 +77,15 @@ end
 
 function love.draw()
     gfx.push()
-    gfx.applyTransform(tf.entity(constant.id.camera):inverse())
-    collision.draw()
+    gfx.applyTransform(tf.entity(constant.id.camera))
+    painter.draw()
+    if draw_collision then collision.draw() end
     gfx.pop()
 
+    painter.draw_ui()
+
     gfx.push("all")
-    if physics.converged_in_area(0, 0, gfx.getWidth(), gfx.getHeight()) then
+    if level.is_complete() then
         gfx.setColor(0, 1, 0.5)
     else
         gfx.setColor(1, 0, 0)
@@ -127,11 +96,6 @@ end
 
 function love.mousepressed(x, y, button)
     event.emit("mousepressed", x, y, button)
-    if true then return end
-    if not physics.converged_in_area(0, 0, gfx.getWidth(), gfx.getHeight()) then return end
-    local t = tf.entity(constant.id.camera)
-    local x, y = t:transformPoint(x, y)
-    spawn(x, y)
 end
 
 function love.mousemoved(x, y, dx, dy)
@@ -144,10 +108,15 @@ end
 
 function love.keypressed(key)
     event.emit("keypressed", key)
+    if key == "q" and camera.rotate_clockwise() then
+        physics.rotate_gravity_clockwise()
+    end
     if key == "r" and camera.rotate_counter_clockwise() then
         physics.rotate_gravity_counter_clockwise()
     end
     if key == "escape" then love.event.quit() end
-    if key == "right" then collision.move(constant.id.camera, 10, 0) end
-    if key == "down" then collision.move(constant.id.camera, 0, 10) end
+    if key == "c" then draw_collision = not draw_collision end
+    if key == "l" and level.is_complete() then level.load_next() end
+    --if key == "right" then collision.move(constant.id.camera, 10, 0) end
+    --if key == "down" then collision.move(constant.id.camera, 0, 10) end
 end

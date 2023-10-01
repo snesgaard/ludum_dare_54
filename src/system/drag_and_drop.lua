@@ -17,7 +17,7 @@ function drag_and_drop.mousemoved(x, y)
     local ry = math.floor(y / 16) * 16
 
     for id, t in stack.view_table(nw.component.being_dragged) do
-        collision.move_to(id, t:inverse():transformPoint(x, y))
+        collision.move_to(id, t:inverse():transformPoint(rx, ry))
     end
 end
 

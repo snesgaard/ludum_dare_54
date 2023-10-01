@@ -38,16 +38,19 @@ end
 
 local function null_velocity(id, nx, ny)
     local v = stack.get(nw.component.velocity, id)
-    if not v then return end
+    if not v then return 0 end
     local d = math.min(0, v.x * nx + v.y * ny)  
     v.x = v.x - nx * d
     v.y = v.y - ny * d
+
+    return d
 end
 
 function physics.handle_collision(colinfo)
-    if colinfo.type ~= "slide" then return end
-    null_velocity(colinfo.item, colinfo.normal.x, colinfo.normal.y)
-    null_velocity(colinfo.other, -colinfo.normal.x, -colinfo.normal.y)
+    if colinfo.type ~= "slide" and colinfo.type ~= "touch" then return end
+    local item_d = null_velocity(colinfo.item, colinfo.normal.x, colinfo.normal.y)
+    local other_d = null_velocity(colinfo.other, -colinfo.normal.x, -colinfo.normal.y)
+    event.emit("impact", colinfo.item, colinfo.other, math.max(math.abs(item_d), math.abs(other_d)))
 end
 
 function physics.spin()
