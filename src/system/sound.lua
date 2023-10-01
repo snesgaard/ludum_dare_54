@@ -2,7 +2,8 @@ local sources = {
     impact = love.audio.newSource("sound/boom.wav", "static"),
     rotate = love.audio.newSource("sound/rotate.wav", "static"),
     rotate_cc = love.audio.newSource("sound/rotate_cc.wav", "static"),
-    win = love.audio.newSource("sound/level_complete.wav", "static")
+    win = love.audio.newSource("sound/level_complete.wav", "static"),
+    bgm = love.audio.newSource("sound/music2.mp3", "static"),
 }
 
 local sound = {}
@@ -34,6 +35,11 @@ function sound.on_win()
 end
 
 function sound.spin()
+    if not sources.bgm:isPlaying() then
+        sources.bgm:setLooping(true)
+        sources.bgm:play()
+    end
+
     for _, item, other, magnitude in event.view("impact") do
         sound.on_impact(item, other, magnitude)
     end

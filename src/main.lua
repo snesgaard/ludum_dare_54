@@ -121,7 +121,9 @@ function love.keypressed(key)
     end
     if key == "escape" then love.event.quit() end
     if key == "c" then draw_collision = not draw_collision end
-    if key == "return" or key == "space" and level.is_complete() then level.load_next() end
+    if (key == "return" or key == "space") and level.is_complete() then
+        level.load_next()
+    end
     --if key == "right" then collision.move(constant.id.camera, 10, 0) end
     --if key == "down" then collision.move(constant.id.camera, 0, 10) end
 end

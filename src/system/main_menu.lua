@@ -53,6 +53,8 @@ function main_menu.handle_activate()
 end
 
 function main_menu.spin()
+    if not level.is_on_main_menu() then return end
+
     for _, key in event.view("keypressed") do
         main_menu.keypressed(key)
     end
