@@ -1,4 +1,4 @@
-title=limited_space_for_packing
+title=your_hdd_has_limited_space
 
 linux_binary=build/$(title)_linux.zip
 windows_zip=build/$(title)_win64.zip
@@ -8,7 +8,7 @@ love_linux_app=build/love-11.4-x86_64.AppImage
 love_win64_zip=build/love-11.4-win64.zip
 love_win64=build/love-11.4-win64
 
-love_file=build/game.zip
+love_file=build/your_hdd_has_limited_space.zip
 
 all: $(love_file) download $(linux_binary) $(windows_binary) $(windows_zip)
 
@@ -24,13 +24,13 @@ clean:
 play:
 	make -C src play
 
-release:
+release: $(love_file)
 	rm -f $(title).love
 	rm -rf $(title)
 	rm -f $(title).zip
 
 	cp -r release_scripts $(title)
-	mv $(title).love $(title)
+	mv $(love_file) $(title)
 	zip -9 -r $(title).zip $(title)
 
 $(linux_binary): $(love_file) $(love_linux_app)

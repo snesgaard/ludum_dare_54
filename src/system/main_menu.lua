@@ -34,7 +34,7 @@ function main_menu.keypressed(key)
         main_menu.prev_option()
     elseif key == "down" then
         main_menu.next_option()
-    elseif key == "return" then
+    elseif key == "return" or key == "space" then
         main_menu.enter()
     end
 end
