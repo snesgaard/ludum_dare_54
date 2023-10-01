@@ -8,7 +8,7 @@ love_linux_app=build/love-11.4-x86_64.AppImage
 love_win64_zip=build/love-11.4-win64.zip
 love_win64=build/love-11.4-win64
 
-love_file=build/your_hdd_has_limited_space.zip
+love_file=build/game.zip
 
 all: $(love_file) download $(linux_binary) $(windows_binary) $(windows_zip)
 
@@ -20,6 +20,9 @@ build:
 clean:
 	rm -rf build
 	make -C src/art clean
+
+gameclean:
+	rm -f $(love_file)
 
 play:
 	make -C src play
@@ -53,7 +56,7 @@ $(windows_zip): $(love_win64) $(windows_binary)
 	mkdir -p build/win64
 	cp -r $(love_win64) build/win64/$(title)
 	cp $(windows_binary) build/win64/$(title)
-	rm build/win64/$(title)/love.exe build/win64/$(title)/lovec.exe
+	rm -f build/win64/$(title)/love.exe build/win64/$(title)/lovec.exe
 	cd build/win64/; zip -9 -r tmp.zip $(title)
 	mv build/win64/tmp.zip $@
 
@@ -66,6 +69,6 @@ $(love_win64): $(love_win64_zip)
 
 $(love_file): build
 	@mkdir -p $(dir $@)
-	cd src; zip -9 -r ../$@ .
+	cd src; zip -x "*.aseprite" -9 -r ../$@ .
 
 .PHONY: build
