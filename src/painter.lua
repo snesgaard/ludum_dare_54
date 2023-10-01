@@ -1,4 +1,14 @@
+local constant = require "constant"
+
 local painter = {}
+
+painter.cache_font = {}
+
+function painter.font(size)
+    local path = "art/font/m5x7.ttf"
+    painter.cache_font[size] = painter.cache_font[size] or gfx.newFont(path, size, "mono")
+    return painter.cache_font[size]
+end
 
 local function remove_hidden(id)
     return not stack.get(nw.component.hidden, id)
@@ -36,7 +46,7 @@ function painter.draw()
     gfx.pop()
 end
 
-local win_frame = get_atlas("art/characters"):get_frame("win_screen")
+local win_frame = get_atlas("art/characters"):get_frame("win_screen/stage")
 
 local particle_image = gfx.prerender(12, 8, function(w, h)
     local rx, ry = w / 2, h / 2
@@ -149,18 +159,92 @@ local function draw_particles()
     end
 end
 
+local DEFAULT_OPT = {
+    align = "center",
+    valign = "center",
+    scale = constant.scale,
+    font = painter.font(64)
+}
+
+local function compute_valign(text, font, w, h, scale, valign)
+    local _, segs = font:getWrap(text, w / scale)
+    local th = #segs * font:getHeight() * scale
+    if valign == "center" then
+        return (h  - th) * 0.5
+    elseif valign == "bottom" then
+        return h - th
+    end
+
+    return 0
+end
+
+function painter.draw_text(text, area, opt)
+    local opt = opt or DEFAULT_OPT
+    local align = opt.align or DEFAULT_OPT.align
+    local valign = opt.valign or DEFAULT_OPT.valign
+    local s = opt.scale or DEFAULT_OPT.scale
+    local font = opt.font or DEFAULT_OPT.font
+    local dy = compute_valign(text, font, area.w, area.h, 1.0 / s, valign)
+    gfx.printf(
+        text, font, area.x, area.y + dy,
+        area.w * s, align,
+        0, 1.0 / s, 1.0 / s
+    )
+end
+
+local main_gui = get_atlas("art/characters"):get_frame("main_gui")
+
+local function draw_move_counter()
+    local slice = main_gui.slices.move_counter
+    if not slice then return end
+    painter.draw_text(level.get_move_counter(), slice)
+end
+
+local function draw_main_gui()
+    main_gui:draw()
+    draw_move_counter()
+end
+
+local game_win_frame = get_atlas("art/characters"):get_frame("win_screen/game")
+
+local function draw_game_win()
+    game_win_frame:draw()
+    local slice = game_win_frame.slices.wintext
+    if not slice then return end
+    painter.draw_text(level.get_move_counter(), slice)
+end
+
+local main_menu_frame = get_atlas("art/characters"):get_frame("main_menu")
+local function draw_main_menu()
+    local s = main_menu.get_state()
+    local slice = main_menu_frame.slices[s.selected]
+    if slice then 
+        gfx.setColor(0.8, 1, 0.2)
+        gfx.rectangle("fill", slice:unpack(5))
+    end
+    gfx.setColor(1, 1, 1)
+    main_menu_frame:draw()
+end
+
 function painter.draw_ui()
     gfx.push("all")
     gfx.scale(constant.scale, constant.scale)
 
-    
-    if level.is_complete() then
-        local w, h = gfx.getWidth(), gfx.getHeight()
-        local cx, cy = w / 2, h / 2
+    if level.is_on_main_menu() then
+        draw_main_menu()
+    elseif not level.is_game_complete() then
+        draw_main_gui()
+        
+        if level.is_complete() then
+            local w, h = gfx.getWidth(), gfx.getHeight()
+            local cx, cy = w / 2, h / 2
 
-        gfx.setColor(1, 1, 1)
-        win_frame:draw()
-        draw_particles()
+            gfx.setColor(1, 1, 1)
+            win_frame:draw()
+            draw_particles()
+        end
+    else
+        draw_game_win()
     end
 
     gfx.pop()

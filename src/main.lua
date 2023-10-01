@@ -16,6 +16,7 @@ camera = require "system.camera"
 drag_and_drop = require "system.drag_and_drop"
 level = require "system.level"
 sound = require "system.sound"
+main_menu = require "system.main_menu"
 
 require "drawable"
 
@@ -30,7 +31,11 @@ function default_collision_filter(item, other)
     if stack.get(nw.component.disable_physics, item) then return "cross" end
     if stack.get(nw.component.disable_physics, other) then return "cross" end
     --if stack.get(nw.component.being_dragged, item) then return "cross" end
-    return "better_slide"
+    if level.is_glitch_mode() then
+        return "slide"
+    else
+        return "better_slide"
+    end
 end
 
 local function spin()
@@ -43,11 +48,10 @@ local function spin()
         sound.spin()
         level.spin()
         nw.system.particles.spin()
+        main_menu.spin()
     end
 
 end
-
-local central_shape = spatial(640, 320, 0, 0):expand(640, 640)
 
 local function spawn(x, y)
     local w = love.math.random(1, 1) * 32   
@@ -67,7 +71,7 @@ function love.load()
     
     local cx, cy = gfx.getWidth() / 2, gfx.getHeight() / 2
     
-    level.load_next()
+    level.init()
 end
 
 function love.update(dt)
@@ -83,15 +87,6 @@ function love.draw()
     gfx.pop()
 
     painter.draw_ui()
-
-    gfx.push("all")
-    if level.is_complete() then
-        gfx.setColor(0, 1, 0.5)
-    else
-        gfx.setColor(1, 0, 0)
-    end
-    gfx.rectangle("fill", 0, 0, 30, 30)
-    gfx.pop()
 end
 
 function love.mousepressed(x, y, button)
@@ -108,15 +103,25 @@ end
 
 function love.keypressed(key)
     event.emit("keypressed", key)
-    if key == "q" and camera.rotate_clockwise() then
-        physics.rotate_gravity_clockwise()
+    if (key == "q" or key == "left") and camera.rotate_clockwise() then
+        if level.is_glitch_mode() then
+            physics.rotate_gravity_counter_clockwise()
+        else
+            physics.rotate_gravity_clockwise()
+        end
+        level.increment_move_counter()
     end
-    if key == "r" and camera.rotate_counter_clockwise() then
-        physics.rotate_gravity_counter_clockwise()
+    if (key == "e" or key == "right") and camera.rotate_counter_clockwise() then
+        if level.is_glitch_mode() then
+            physics.rotate_gravity_clockwise()
+        else
+            physics.rotate_gravity_counter_clockwise()
+        end
+        level.increment_move_counter()
     end
     if key == "escape" then love.event.quit() end
     if key == "c" then draw_collision = not draw_collision end
-    if key == "l" and level.is_complete() then level.load_next() end
+    if key == "return" and level.is_complete() then level.load_next() end
     --if key == "right" then collision.move(constant.id.camera, 10, 0) end
     --if key == "down" then collision.move(constant.id.camera, 0, 10) end
 end

@@ -8,6 +8,8 @@ local level_ordering = {
     "art/maps/build/level4.lua",
     "art/maps/build/level5.lua",
     "art/maps/build/level6.lua",
+    "art/maps/build/level8.lua",
+    "art/maps/build/level7.lua",
 }
 
 local level = {}
@@ -113,8 +115,15 @@ function level.load(path)
     return map
 end
 
+function level.is_on_main_menu()
+    local gs = stack.ensure(nw.component.global_state, constant.id.level)
+    return gs.show_main_menu
+end
+
 local function nil_filter() return "cross" end
 function level.is_complete()
+    if level.is_on_main_menu() then return false end
+
     if stack.get(nw.component.is_complete, constant.id.level) then return true end
 
     local touching_goals = dict()
@@ -141,17 +150,35 @@ local function find_level_index()
     return List.argfind(level_ordering, loaded_map.path) or 0
 end
 
+function level.init()
+    stack.set(nw.component.global_state, constant.id.level)
+    local gs = stack.get(nw.component.global_state, constant.id.level)
+    gs.show_main_menu = true
+end
+
 function level.load_next()
     local index = find_level_index()
     local next_index = index + 1
     local path = level_ordering[next_index]
-    if not path then return false end
+    local global_state = stack.ensure(nw.component.global_state, constant.id.level)
+    global_state.show_main_menu = false
+
     stack.reset()
 
+    stack.set(nw.component.global_state, constant.id.level, global_state)
     collision.set_default_filter(default_collision_filter)
-    local map = level.load(path)
-    level.setup_camera(map)
+    --path = nil
+    if path then
+        local map = level.load(path)
+        level.setup_camera(map)
+    else
+        stack.get(nw.component.global_state, constant.id.level).game_complete = true
+    end
     return true
+end
+
+function level.is_game_complete()
+    return stack.ensure(nw.component.global_state, constant.id.level).game_complete
 end
 
 function level.is_loaded()
@@ -175,12 +202,30 @@ function level.setup_camera(map)
     )
 end
 
+function level.increment_move_counter()
+    if level.is_complete() then return end
+    local s = stack.ensure(nw.component.global_state, constant.id.level)
+    s.moves_taken = s.moves_taken + 1
+end
 
+function level.get_move_counter()
+    local s = stack.ensure(nw.component.global_state, constant.id.level)
+    return s.moves_taken
+end
 
 function level.spin()
     for _, dt in event.view("update") do
         --if level.is_loaded() and level.is_complete() then return level.load_next() end
     end
+end
+
+function level.is_glitch_mode()
+    local s = stack.ensure(nw.component.global_state, constant.id.level)
+    return s.glitch_mode
+end
+
+function level.set_glitch_mode(v)
+    stack.ensure(nw.component.global_state, constant.id.level).glitch_mode = v
 end
 
 return level

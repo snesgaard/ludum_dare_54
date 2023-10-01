@@ -14,10 +14,16 @@ function sound.on_rotate(clockwise)
     s:play()
 end
 
+function get_threshold_impact()
+    if level.is_glitch_mode() then
+        return love.math.random(0, 240)
+    else
+        return 100
+    end
+end
+
 function sound.on_impact(item, other, magnitude)
-    --local t = love.math.random(0, 240) * 0 + 100
-    local t = 100
-    if magnitude < t then return end
+    if magnitude < get_threshold_impact() then return end
     sources.impact:stop()
     sources.impact:play()
 end

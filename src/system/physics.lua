@@ -31,9 +31,21 @@ function physics.update_position(dt)
     end
 end
 
+function physics.update_glitch_mode(dt)
+    if not level.is_glitch_mode() then return end
+
+    local m = 5 * 60 * dt
+    for id, _ in stack.view_table(nw.component.velocity) do
+        local dx = love.math.random(-m, m)
+        local dy = love.math.random(-m, m)
+        collision.move(id, dx, dy)
+    end
+end
+
 function physics.update(dt)
     physics.update_velocity(dt)
     physics.update_position(dt)
+    physics.update_glitch_mode(dt)
 end
 
 local function null_velocity(id, nx, ny)
